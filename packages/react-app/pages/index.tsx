@@ -1,37 +1,121 @@
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useWeb3 } from "@/hooks/useWeb3";
+import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 export default function Home() {
-    const [userAddress, setUserAddress] = useState("");
-    const [isMounted, setIsMounted] = useState(false);
-    const { address, isConnected } = useAccount();
+  const [userAddress, setUserAddress] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+  const [minting, setMinting] = useState(false);
+  const [isTestnet, setIsTestnet] = useState(false);
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
+  const { balances, getTokenBalance, getNftFromSepolia, mintNftOnSepolia } =
+    useWeb3();
 
-    useEffect(() => {
-        if (isConnected && address) {
-            setUserAddress(address);
-        }
-    }, [address, isConnected]);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-    if (!isMounted) {
-        return null;
+  useEffect(() => {
+    if (chainId === 44787) {
+      setIsTestnet(true);
+    } else {
+      setIsTestnet(false);
     }
+  }, [chainId]);
 
+  useEffect(() => {
+    if (isConnected && address) {
+      setUserAddress(address);
+    }
+  }, [address, isConnected]);
+
+  useEffect(() => {
+    getTokenBalance();
+    getNftFromSepolia();
+  }, []);
+
+  if (!isTestnet) {
     return (
-        <div className="flex flex-col justify-center items-center">
-            <div className="h1">
-                There you go... a canvas for your next Celo project!
-            </div>
-            {isConnected ? (
-                <div className="h2 text-center">
-                    Your address: {userAddress}
-                </div>
-            ) : (
-                <div>No Wallet Connected</div>
-            )}
-        </div>
+      <div>
+        <h1>Wrong Network</h1>
+        <p>Please connect to Alfajores testnet</p>
+      </div>
     );
+  }
+
+  if (!isMounted) {
+    return null;
+  }
+
+  const mintNFT = async () => {
+    try {
+      setMinting(true);
+      const txHash = await mintNftOnSepolia();
+      console.log("txHash", txHash);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setMinting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col justify-center items-center w-full">
+      {isConnected ? (
+        <>
+          <Card className="w-full border-black border">
+            <CardHeader>
+              <CardTitle>Balances</CardTitle>
+              <CardDescription>{userAddress}</CardDescription>
+            </CardHeader>
+            <CardContent className="text-lg">
+              <p>
+                Celo: <b>{balances.celo} CELO</b>
+              </p>
+              <p>
+                cUSD: <b>{balances.cusd} cUSD</b>
+              </p>
+              <p>
+                Link: <b>{balances.link} LINK</b>
+              </p>
+            </CardContent>
+          </Card>
+          <main className="my-4 flex items-center flex-col space-y-4">
+            {/* Check for previous NFTs */}
+            <div>
+              <Button disabled={minting} onClick={mintNFT}>
+                {minting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Please wait...
+                  </>
+                ) : (
+                  "Mint NFT on Sepolia"
+                )}
+              </Button>
+            </div>
+            <p className="text-gray-500">No NFTs found in your account.</p>
+
+            {/* <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="w-[150px] h-[175px] rounded-xl" />
+              <Skeleton className="w-[150px] h-[175px] rounded-xl" />
+            </div> */}
+          </main>
+        </>
+      ) : (
+        <div>No Wallet Connected</div>
+      )}
+    </div>
+  );
 }

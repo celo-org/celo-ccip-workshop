@@ -19,8 +19,15 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
 
-  const { balances, getTokenBalance, getNftFromSepolia, mintNftOnSepolia } =
-    useWeb3();
+  const {
+    balances,
+    nftBalance,
+    getTokenBalance,
+    getNftFromSepolia,
+    mintNftOnSepolia,
+  } = useWeb3();
+
+  const [ccipTxHash, setCcipTxHash] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -62,7 +69,7 @@ export default function Home() {
     try {
       setMinting(true);
       const txHash = await mintNftOnSepolia();
-      console.log("txHash", txHash);
+      setCcipTxHash(txHash);
     } catch (e) {
       console.error(e);
     } finally {
@@ -105,7 +112,26 @@ export default function Home() {
                 )}
               </Button>
             </div>
-            <p className="text-gray-500">No NFTs found in your account.</p>
+            {ccipTxHash && (
+              <div>
+                <a
+                  href={`https://alfajores.celoscan.io/${ccipTxHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500"
+                >
+                  View on CeloScan
+                </a>
+              </div>
+            )}
+            {nftBalance === BigInt(0) ? (
+              <p className="text-gray-500">No NFTs found in your account.</p>
+            ) : (
+              <div className="mt-10 font-bold w-full flex items-center justify-center flex-col">
+                <h2 className="text-2xl">NFT Count</h2>
+                <h1 className="text-4xl">{nftBalance.toString()}</h1>
+              </div>
+            )}
 
             {/* <div className="grid grid-cols-2 gap-4">
               <Skeleton className="w-[150px] h-[175px] rounded-xl" />

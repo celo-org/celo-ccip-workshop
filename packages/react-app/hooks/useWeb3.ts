@@ -4,6 +4,7 @@ import {
   getAlfajoresSourceMinterAddress,
   getSepoliaNftAddress,
   getTokenAddress,
+  receiverdDestinationMinterAddress,
 } from "@/lib/config";
 import { useState } from "react";
 import {
@@ -33,6 +34,7 @@ export const useWeb3 = () => {
     chain: celoAlfajores,
     transport: http(),
   });
+  const [nftBalance, setNftBalance] = useState(BigInt(0));
 
   const getAlfajoresWalletClient = () => {
     if (typeof window !== "undefined" && window.ethereum) {
@@ -61,8 +63,7 @@ export const useWeb3 = () => {
     const linkBalance = await alfajoresPublicClient.readContract({
       address: getTokenAddress("link"),
       abi: erc20Abi,
-      args: ["0xF11f9085D5d8AFB2e5de62466F6e82F379E74509"],
-      // args: [(await alfajoresWalletClient.getAddresses())[0]],
+      args: [(await alfajoresWalletClient.getAddresses())[0]],
       functionName: "balanceOf",
     });
     setBalances({
@@ -76,14 +77,14 @@ export const useWeb3 = () => {
     const alfajoresWalletClient = getAlfajoresWalletClient();
     if (!alfajoresWalletClient) return null;
 
-    const nftBalance = await sepoliaPublicClient.readContract({
+    const nftBalances = await sepoliaPublicClient.readContract({
       address: getSepoliaNftAddress(),
       abi: erc721Abi,
-      args: ["0x98f7e3fc142ce7736956cd79d3f6b164c631a3d9"],
-      // args: [(await alfajoresWalletClient.getAddresses())[0]],
+      args: [(await alfajoresWalletClient.getAddresses())[0]],
       functionName: "balanceOf",
     });
-    console.log("🚀 ~ getNftFromSepolia ~ nftBalance:", nftBalance);
+    console.log("nftBalance", nftBalances);
+    setNftBalance(nftBalances);
   };
 
   const mintNftOnSepolia = async () => {
@@ -91,9 +92,8 @@ export const useWeb3 = () => {
     if (!alfajoresWalletClient) return null;
 
     const destinationChainSelector = BigInt("16015286601757825753");
-    console.log("destinationChainSelector", destinationChainSelector);
     const receiverDestinationMinterAddress =
-      "0x98413ff50d1e41C34a41bd7910b362A358610469";
+      receiverdDestinationMinterAddress();
     const payFeesIn = 1; // LINK
 
     const tx = await alfajoresWalletClient.writeContract({
@@ -111,5 +111,11 @@ export const useWeb3 = () => {
     return tx;
   };
 
-  return { balances, getTokenBalance, getNftFromSepolia, mintNftOnSepolia };
+  return {
+    balances,
+    nftBalance,
+    getTokenBalance,
+    getNftFromSepolia,
+    mintNftOnSepolia,
+  };
 };

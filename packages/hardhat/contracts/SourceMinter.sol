@@ -32,7 +32,7 @@ contract SourceMinter is Withdraw {
     ) external {
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
             receiver: abi.encode(receiver),
-            data: abi.encodeWithSignature("mint(address)", msg.sender),
+            data: abi.encodeWithSignature("safeMint(address)", msg.sender),
             tokenAmounts: new Client.EVMTokenAmount[](0),
             extraArgs: "",
             feeToken: payFeesIn == PayFeesIn.LINK ? i_link : address(0)

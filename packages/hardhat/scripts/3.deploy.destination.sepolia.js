@@ -1,7 +1,7 @@
 const hre = require("hardhat");
 
 const routerAddress = "0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59";
-const celoNFTAddress = "0x5F7d03E873c2E2F544540A03c46dD34bC4A47436";
+const celoNFTAddress = "";
 
 async function main() {
   console.log(`Deploying Destination Minter...`);
